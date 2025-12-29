@@ -29,14 +29,12 @@ It ensures data integrity and enforces relationships between users, vehicles, an
 ### CREATE Users TABLE
 
 ```ts
-create type user_role as enum ('Admin', 'Customer')
 create table users(
     user_id serial PRIMARY key,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(250) UNIQUE NOT null,
-    password VARCHAR(255),
     phone VARCHAR(20),
-    role user_role NOT NULL
+    role VARCHAR(20) NOT NULL CHECK (role IN ('Admin', 'Customer')) DEFAULT 'Customer',
 );
 ```
 
@@ -60,17 +58,14 @@ INSERT INTO Users (user_id, name, email, phone, role) VALUES
 ### CREATE Vehicles TABLE
 
 ```ts
-create type vehicle_type as enum ('car', 'bike', 'truck');
-create type vehicle_status as enum ('available', 'rented', 'maintenance');
 create table vehicles(
     vehicle_id serial PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    type vehicle_type NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('car', 'bike', 'truck')),
     model VARCHAR(50),
     registration_number VARCHAR(250) UNIQUE NOT NULL,
-    rental_price DECIMAL(10) NOT NULL check (rental_price > 0),
-    availability_status vehicle_status NOT NULL
-);
+    rental_price NUMERIC(10,2) NOT NULL CHECK (rental_price > 0),
+    status VARCHAR(20) NOT NULL CHECK (availability_status IN ('available', 'rented', 'maintenance')) DEFAULT 'available',);
 ```
 
 ### INSERT Vehicles
@@ -96,18 +91,16 @@ INSERT INTO Vehicles (vehicle_id, name, type, model, registration_number, rental
 ### CREATE Bookings TABLE
 
 ```ts
-create type booking_type as enum ('pending', 'confirmed', 'completed', 'cancelled');
-create table bookings(
-    booking_id serial PRIMARY key,
-    user_id int not NULL,
-    vehicle_id int not null,
-    start_date DATE not null,
-    end_date DATE not null,
-    booking_status booking_type not null DEFAULT 'pending',
-    total_cost DECIMAL(10) not null,
-    constraint fk_booking_user FOREIGN KEY (user_id) REFERENCES users(user_id) on delete CASCADE,
-    constraint fk_booking_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) on delete CASCADE,
-    constraint fk_booking_dates check (end_date >= start_date)
+CREATE TABLE Bookings (
+    booking_id serial PRIMARY KEY,
+    user_id INT,
+    vehicle_id INT,
+    start_date DATE,
+    end_date DATE,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+    total_cost DECIMAL(10, 2),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (vehicle_id) REFERENCES Vehicles(vehicle_id)
 );
 ```
 
